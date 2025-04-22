@@ -98,6 +98,31 @@
             border-bottom: 3px solid;
         }
 
+        .status-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+
+        .status-completed {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .status-wip {
+            background-color: #f59e0b;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .comic-container {
                 max-width: 95%;
@@ -116,6 +141,11 @@
             .plant-decoration {
                 width: 100px;
                 opacity: 0.6;
+            }
+
+            .status-indicator {
+                font-size: 10px;
+                padding: 4px 8px;
             }
         }
     </style>
@@ -163,6 +193,10 @@
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-600"></div>
                 </div>
                 <img id="comic-image" class="comic-image" alt="Comic Page">
+                <div id="status-indicator" class="status-indicator hidden">
+                    <span id="status-text"></span>
+                    <i id="status-icon" class="ml-1"></i>
+                </div>
             </div>
 
             <div class="flex justify-between items-center mt-8 max-w-md mx-auto">
@@ -360,12 +394,19 @@
             const nextBtn = document.getElementById('next-btn');
             const pageIndicator = document.getElementById('page-indicator');
             const loadingElement = document.getElementById('loading');
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const statusIcon = document.getElementById('status-icon');
 
             const totalPages = 40;
             let currentPage = 1;
 
+            // Define completed pages
+            const completedPages = [3, 4, 5, 6];
+
             // Preload the first image
             loadImage(currentPage);
+            updateStatusIndicator(currentPage);
 
             // Navigation functions
             function goToPrevPage() {
@@ -373,6 +414,7 @@
                     currentPage--;
                     loadImage(currentPage);
                     updateUI();
+                    updateStatusIndicator(currentPage);
                 }
             }
 
@@ -381,6 +423,7 @@
                     currentPage++;
                     loadImage(currentPage);
                     updateUI();
+                    updateStatusIndicator(currentPage);
                 }
             }
 
@@ -404,6 +447,21 @@
                     // Fallback image if page doesn't exist
                     comicImage.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="1131" viewBox="0 0 800 1131"%3E%3Crect fill="%23f5f5f4" width="800" height="1131"/%3E%3Ctext fill="%23d6d3d1" font-family="Arial,Helvetica,sans-serif" font-size="60" x="400" y="565.5" text-anchor="middle"%3EPage not found%3C/text%3E%3C/svg%3E';
                 };
+            }
+
+            // Update status indicator
+            function updateStatusIndicator(pageNumber) {
+                if (completedPages.includes(pageNumber)) {
+                    statusIndicator.classList.remove('hidden', 'status-wip');
+                    statusIndicator.classList.add('status-completed');
+                    statusText.textContent = 'Completed';
+                    statusIcon.className = 'fas fa-check-circle ml-1';
+                } else {
+                    statusIndicator.classList.remove('hidden', 'status-completed');
+                    statusIndicator.classList.add('status-wip');
+                    statusText.textContent = 'Work In Progress';
+                    statusIcon.className = 'fas fa-hourglass-half ml-1';
+                }
             }
 
             // Update UI elements
