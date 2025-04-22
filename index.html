@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mythic Tales | Comic Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-image: url('Messina.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+        }
+
+        .comic-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 1/1.414; /* A4 aspect ratio */
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            background-color: #f8f8f8;
+            overflow: hidden;
+            border-radius: 4px;
+            border: 1px solid rgba(209, 213, 219, 0.5);
+        }
+
+        .comic-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: white;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .nav-button {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-button:active {
+            transform: translateY(0);
+        }
+
+        .nav-link:hover {
+            color: #d1c5a7;
+        }
+
+        .content-overlay {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .plant-decoration {
+            position: fixed;
+            bottom: 0;
+            width: 180px;
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        .plant-left {
+            left: 0;
+        }
+
+        .plant-right {
+            right: 0;
+            transform: scaleX(-1);
+        }
+
+        .scroll-indicator {
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 1px;
+        }
+
+        .greek-border {
+            border-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M0,20 Q25,10 50,20 T100,20" fill="none" stroke="%23d1a05f" stroke-width="2"/></svg>') 30 round;
+            border-bottom: 3px solid;
+        }
+
+        @media (max-width: 768px) {
+            .comic-container {
+                max-width: 95%;
+            }
+
+            .logo {
+                max-width: 80%;
+            }
+
+            .nav-menu {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .plant-decoration {
+                width: 100px;
+                opacity: 0.6;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-serif">
+    <!-- Plant Decorations -->
+    <img src="plant.png" alt="Plant decoration" class="plant-decoration plant-left hidden md:block">
+    <img src="plant.png" alt="Plant decoration" class="plant-decoration plant-right hidden md:block">
+
+    <!-- Navigation -->
+    <header class="content-overlay border-b border-stone-200 relative">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <img src="logo.png" alt="Mythic Tales Logo" class="logo h-20 mr-4">
+                    <h1 class="text-4xl font-bold text-stone-800">Mythic Tales</h1>
+                </div>
+
+                <nav class="nav-menu flex space-x-6 text-stone-700">
+                    <a href="#" class="nav-link hover:text-amber-800 transition text-lg" onclick="showSection('viewer')">Comic</a>
+                    <a href="#" class="nav-link hover:text-amber-800 transition text-lg" onclick="showSection('about')">About</a>
+                    <a href="#" class="nav-link hover:text-amber-800 transition text-lg" onclick="showSection('contact')">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 relative">
+        <!-- Comic Viewer Section (default visible) -->
+        <section id="viewer-section" class="comic-section">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-semibold text-stone-700 mb-2">Dolce è La Terra Che Ti Nasconde</h2>
+                <p class="text-stone-600 max-w-2xl mx-auto italic">"Là dove finisce il respiro, inizia la memoria."</p>
+            </div>
+
+            <div class="flex items-center justify-center mb-4 greek-border pb-4">
+                <div class="w-16 h-1 bg-amber-700 mx-2"></div>
+                <span class="scroll-indicator text-amber-800 font-medium">PAGINE DEL DESTINO</span>
+                <div class="w-16 h-1 bg-amber-700 mx-2"></div>
+            </div>
+
+            <div class="comic-container relative">
+                <div id="loading" class="loading hidden">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-600"></div>
+                </div>
+                <img id="comic-image" class="comic-image" alt="Comic Page">
+            </div>
+
+            <div class="flex justify-between items-center mt-8 max-w-md mx-auto">
+                <button id="prev-btn" class="nav-button bg-amber-700 hover:bg-amber-800 text-white rounded-full p-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+
+                <div class="text-center px-6 py-3 bg-white rounded-lg shadow-md border border-amber-100">
+                    <span id="page-indicator" class="font-bold text-stone-700 scroll-indicator">Page 1 of 40</span>
+                </div>
+
+                <button id="next-btn" class="nav-button bg-amber-700 hover:bg-amber-800 text-white rounded-full p-4 shadow-lg">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+
+            <div class="mt-8 text-center">
+                <div class="inline-flex items-center bg-stone-100 px-4 py-2 rounded-full shadow-inner">
+                    <i class="fas fa-book-open text-amber-700 mr-2"></i>
+                    <span class="text-stone-700">Volume I: Lisabetta da Messina</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section (hidden by default) -->
+        <section id="about-section" class="hidden max-w-4xl mx-auto py-12">
+            <div class="bg-white p-8 rounded-lg shadow-md border border-amber-100 content-overlay">
+                <h2 class="text-3xl font-bold text-stone-800 mb-6 border-b pb-2 border-stone-200">About Mythic Tales</h2>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-scroll text-amber-700 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-amber-700">Our Story</h3>
+                        </div>
+                        <p class="text-stone-700 mb-4">
+                            Founded in the tradition of ancient storytellers, Mythic Tales brings to life the epic stories of Greek mythology and medieval legends through beautifully illustrated comics.
+                        </p>
+                        <p class="text-stone-700">
+                            Each story is meticulously researched by our team of historians to blend historical accuracy with fantastical elements, creating immersive worlds that honor our cultural heritage.
+                        </p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-users text-amber-700 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-amber-700">The Creative Team</h3>
+                        </div>
+                        <p class="text-stone-700 mb-4">
+                            Our team of writers, artists, and scholars work together to craft stories that resonate with modern audiences while staying true to their ancient roots.
+                        </p>
+                        <div class="flex space-x-4 mt-4">
+                            <div class="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center shadow">
+                                <i class="fas fa-quill text-amber-700"></i>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center shadow">
+                                <i class="fas fa-palette text-amber-700"></i>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center shadow">
+                                <i class="fas fa-landmark text-amber-700"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-mountain text-amber-700 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-amber-700">Inspiration</h3>
+                    </div>
+                    <p class="text-stone-700 mb-6">
+                        Drawing from Greek mythology, medieval European folklore, and the rich tradition of heroic epics, our comics weave together universal themes of heroism, sacrifice, and the eternal struggle between order and chaos.
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center p-4 bg-stone-100 rounded-lg border border-amber-100 shadow-sm">
+                            <i class="fas fa-leaf text-amber-700 text-3xl mb-2"></i>
+                            <p class="text-sm text-stone-700 font-medium">Nature Spirits</p>
+                        </div>
+                        <div class="text-center p-4 bg-stone-100 rounded-lg border border-amber-100 shadow-sm">
+                            <i class="fas fa-helmet-battle text-amber-700 text-3xl mb-2"></i>
+                            <p class="text-sm text-stone-700 font-medium">Heroic Quests</p>
+                        </div>
+                        <div class="text-center p-4 bg-stone-100 rounded-lg border border-amber-100 shadow-sm">
+                            <i class="fas fa-temple text-amber-700 text-3xl mb-2"></i>
+                            <p class="text-sm text-stone-700 font-medium">Ancient Temples</p>
+                        </div>
+                        <div class="text-center p-4 bg-stone-100 rounded-lg border border-amber-100 shadow-sm">
+                            <i class="fas fa-dragon text-amber-700 text-3xl mb-2"></i>
+                            <p class="text-sm text-stone-700 font-medium">Mythical Beasts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section (hidden by default) -->
+        <section id="contact-section" class="hidden max-w-2xl mx-auto py-12">
+            <div class="bg-white p-8 rounded-lg shadow-md border border-amber-100 content-overlay">
+                <h2 class="text-3xl font-bold text-stone-800 mb-6 border-b pb-2 border-stone-200">Contact the Oracles</h2>
+
+                <form class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-stone-700 mb-1 font-medium">Your Name</label>
+                        <input type="text" id="name" class="w-full px-4 py-2 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-stone-700 mb-1 font-medium">Your Pigeon Address</label>
+                        <input type="email" id="email" class="w-full px-4 py-2 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="(We'll send a messenger)">
+                    </div>
+
+                    <div>
+                        <label for="message" class="block text-stone-700 mb-1 font-medium">Your Message</label>
+                        <textarea id="message" rows="4" class="w-full px-4 py-2 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Write your message as if carving it in stone..."></textarea>
+                    </div>
+
+                    <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white px-6 py-3 rounded-lg transition flex items-center justify-center w-full">
+                        <i class="fas fa-feather mr-2"></i> Send by Divine Messenger
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-6 border-t border-stone-200">
+                    <h3 class="text-xl font-semibold text-amber-700 mb-3">Other Ways to Reach Us</h3>
+                    <div class="flex flex-col space-y-3 text-stone-700">
+                        <div class="flex items-center bg-stone-100 p-3 rounded-lg">
+                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-envelope text-amber-700"></i>
+                            </div>
+                            <span>oracles@mythic-tales.com</span>
+                        </div>
+                        <div class="flex items-center bg-stone-100 p-3 rounded-lg">
+                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-phone text-amber-700"></i>
+                            </div>
+                            <span>+30 210 123 4567 (Mount Olympus)</span>
+                        </div>
+                        <div class="flex items-center bg-stone-100 p-3 rounded-lg">
+                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-map-marker-alt text-amber-700"></i>
+                            </div>
+                            <span>The Acropolis, Athens, Greece</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-800 text-stone-300 py-8 relative content-overlay">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Mythic Tales</h3>
+                    <p class="mb-4">Bringing ancient myths and medieval legends to life through the sacred art of storytelling.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-amber-500 hover:text-amber-400 text-xl"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-amber-500 hover:text-amber-400 text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-amber-500 hover:text-amber-400 text-xl"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="hover:text-amber-400 transition flex items-center" onclick="showSection('viewer')"><i class="fas fa-book-open mr-2"></i> Comic Viewer</a></li>
+                        <li><a href="#" class="hover:text-amber-400 transition flex items-center" onclick="showSection('about')"><i class="fas fa-scroll mr-2"></i> About Us</a></li>
+                        <li><a href="#" class="hover:text-amber-400 transition flex items-center" onclick="showSection('contact')"><i class="fas fa-quill mr-2"></i> Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Nota Bene</h3>
+                    <p class="mb-4">Il contenuto qui mostrato è da considerarsi provvisorio e può subire modifiche in qualsiasi momento.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-stone-700 mt-8 pt-6 text-center">
+                <p>&copy; 2023 Mythic Tales. All rights reserved by the gods.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Comic Viewer Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const comicImage = document.getElementById('comic-image');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageIndicator = document.getElementById('page-indicator');
+            const loadingElement = document.getElementById('loading');
+
+            const totalPages = 40;
+            let currentPage = 1;
+
+            // Preload the first image
+            loadImage(currentPage);
+
+            // Navigation functions
+            function goToPrevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadImage(currentPage);
+                    updateUI();
+                }
+            }
+
+            function goToNextPage() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadImage(currentPage);
+                    updateUI();
+                }
+            }
+
+            // Image loading function
+            function loadImage(pageNumber) {
+                loadingElement.classList.remove('hidden');
+                comicImage.style.opacity = '0.5';
+
+                const img = new Image();
+                img.src = `pages/page${pageNumber}.png`;
+
+                img.onload = function() {
+                    comicImage.src = img.src;
+                    comicImage.style.opacity = '1';
+                    loadingElement.classList.add('hidden');
+                };
+
+                img.onerror = function() {
+                    loadingElement.classList.add('hidden');
+                    comicImage.style.opacity = '1';
+                    // Fallback image if page doesn't exist
+                    comicImage.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="1131" viewBox="0 0 800 1131"%3E%3Crect fill="%23f5f5f4" width="800" height="1131"/%3E%3Ctext fill="%23d6d3d1" font-family="Arial,Helvetica,sans-serif" font-size="60" x="400" y="565.5" text-anchor="middle"%3EPage not found%3C/text%3E%3C/svg%3E';
+                };
+            }
+
+            // Update UI elements
+            function updateUI() {
+                pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages;
+            }
+
+            // Event listeners
+            prevBtn.addEventListener('click', goToPrevPage);
+            nextBtn.addEventListener('click', goToNextPage);
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    goToPrevPage();
+                } else if (e.key === 'ArrowRight') {
+                    goToNextPage();
+                }
+            });
+
+            // Touch swipe for mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            comicImage.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, false);
+
+            comicImage.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, false);
+
+            function handleSwipe() {
+                if (touchEndX < touchStartX - 50) {
+                    // Swipe left - next page
+                    goToNextPage();
+                } else if (touchEndX > touchStartX + 50) {
+                    // Swipe right - previous page
+                    goToPrevPage();
+                }
+            }
+        });
+
+        // Section Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.getElementById('viewer-section').classList.add('hidden');
+            document.getElementById('about-section').classList.add('hidden');
+            document.getElementById('contact-section').classList.add('hidden');
+
+            // Show selected section
+            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
